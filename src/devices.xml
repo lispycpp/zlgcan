@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!-- Copyright © 2023 idea4e. All rights reserved. -->
+<!-- Copyright © 2023-2025 HANZE. All rights reserved. -->
 <Devices>
-    <Device type="ZCAN_USBCAN1" id="3" fd="false" channels="1">
+    <Device name="ZCAN_USBCAN1" type="3" fd="false" channels="1">
         <Configurations>
-            <RawFilte configurable="false" method="ZCAN_SetValue" sequence="BEFORE_INIT_CAN" />
+            <RawFilter configurable="false" method="ZCAN_SetValue" sequence="BEFORE_INIT_CAN" />
             <ErrorFilter configurable="false" method="ZCAN_SetValue" sequence="BEFORE_INIT_CAN" />
             <Loopback configurable="false" method="ZCAN_SetValue" sequence="BEFORE_INIT_CAN" />
             <ReceiveOwn configurable="false" method="ZCAN_SetValue" sequence="BEFORE_INIT_CAN" />
@@ -20,9 +20,9 @@
             <DataBitRate configurable="false" method="ZCAN_SetValue" sequence="BEFORE_INIT_CAN" />
         </Configurations>
     </Device>
-    <Device type="ZCAN_USBCAN2" id="4" fd="false" channels="2">
+    <Device name="ZCAN_USBCAN2" type="4" fd="false" channels="2">
         <Configurations>
-            <RawFilte configurable="false" method="ZCAN_SetValue" sequence="BEFORE_INIT_CAN" />
+            <RawFilter configurable="false" method="ZCAN_SetValue" sequence="BEFORE_INIT_CAN" />
             <ErrorFilter configurable="false" method="ZCAN_SetValue" sequence="BEFORE_INIT_CAN" />
             <Loopback configurable="false" method="ZCAN_SetValue" sequence="BEFORE_INIT_CAN" />
             <ReceiveOwn configurable="false" method="ZCAN_SetValue" sequence="BEFORE_INIT_CAN" />
@@ -39,9 +39,9 @@
             <DataBitRate configurable="false" method="ZCAN_SetValue" sequence="BEFORE_INIT_CAN" />
         </Configurations>
     </Device>
-    <Device type="ZCAN_USBCAN_E_U" id="20" fd="false" channels="1">
+    <Device name="ZCAN_USBCAN_E_U" type="20" fd="false" channels="1">
         <Configurations>
-            <RawFilte configurable="false" method="ZCAN_SetValue" sequence="BEFORE_INIT_CAN" />
+            <RawFilter configurable="false" method="ZCAN_SetValue" sequence="BEFORE_INIT_CAN" />
             <ErrorFilter configurable="false" method="ZCAN_SetValue" sequence="BEFORE_INIT_CAN" />
             <Loopback configurable="false" method="ZCAN_SetValue" sequence="BEFORE_INIT_CAN" />
             <ReceiveOwn configurable="false" method="ZCAN_SetValue" sequence="BEFORE_INIT_CAN" />
@@ -58,9 +58,9 @@
             <DataBitRate configurable="false" method="ZCAN_SetValue" sequence="BEFORE_INIT_CAN" />
         </Configurations>
     </Device>
-    <Device type="ZCAN_USBCAN_2E_U" id="21" fd="false" channels="2">
+    <Device name="ZCAN_USBCAN_2E_U" type="21" fd="false" channels="2">
         <Configurations>
-            <RawFilte configurable="false" method="ZCAN_SetValue" sequence="BEFORE_INIT_CAN" />
+            <RawFilter configurable="false" method="ZCAN_SetValue" sequence="BEFORE_INIT_CAN" />
             <ErrorFilter configurable="false" method="ZCAN_SetValue" sequence="BEFORE_INIT_CAN" />
             <Loopback configurable="false" method="ZCAN_SetValue" sequence="BEFORE_INIT_CAN" />
             <ReceiveOwn configurable="false" method="ZCAN_SetValue" sequence="BEFORE_INIT_CAN" />
@@ -78,9 +78,9 @@
         </Configurations>
     </Device>
 
-    <Device type="ZCAN_USBCANFD_MINI" id="43" fd="true" channels="1">
+    <Device name="ZCAN_USBCANFD_MINI" type="43" fd="true" channels="1">
         <Configurations>
-            <RawFilte configurable="false" method="ZCAN_SetValue" sequence="BEFORE_INIT_CAN" />
+            <RawFilter configurable="false" method="ZCAN_SetValue" sequence="BEFORE_INIT_CAN" />
             <ErrorFilter configurable="false" method="ZCAN_SetValue" sequence="BEFORE_INIT_CAN" />
             <Loopback configurable="false" method="ZCAN_SetValue" sequence="BEFORE_INIT_CAN" />
             <ReceiveOwn configurable="false" method="ZCAN_SetValue" sequence="BEFORE_INIT_CAN" />
@@ -107,9 +107,9 @@
             </DataBitRate>
         </Configurations>
     </Device>
-    <Device type="ZCAN_USBCANFD_100U" id="42" fd="true" channels="1">
+    <Device name="ZCAN_USBCANFD_100U" type="42" fd="true" channels="1">
         <Configurations>
-            <RawFilte configurable="false" method="ZCAN_SetValue" sequence="BEFORE_INIT_CAN" />
+            <RawFilter configurable="false" method="ZCAN_SetValue" sequence="BEFORE_INIT_CAN" />
             <ErrorFilter configurable="false" method="ZCAN_SetValue" sequence="BEFORE_INIT_CAN" />
             <Loopback configurable="false" method="ZCAN_SetValue" sequence="BEFORE_INIT_CAN" />
             <ReceiveOwn configurable="false" method="ZCAN_SetValue" sequence="BEFORE_INIT_CAN" />
@@ -136,9 +136,9 @@
             </DataBitRate>
         </Configurations>
     </Device>
-    <Device type="ZCAN_USBCANFD_200U" id="41" fd="true" channels="2">
+    <Device name="ZCAN_USBCANFD_200U" type="41" fd="true" channels="2">
         <Configurations>
-            <RawFilte configurable="false" method="ZCAN_SetValue" sequence="BEFORE_INIT_CAN" />
+            <RawFilter configurable="false" method="ZCAN_SetValue" sequence="BEFORE_INIT_CAN" />
             <ErrorFilter configurable="false" method="ZCAN_SetValue" sequence="BEFORE_INIT_CAN" />
             <Loopback configurable="false" method="ZCAN_SetValue" sequence="BEFORE_INIT_CAN" />
             <ReceiveOwn configurable="false" method="ZCAN_SetValue" sequence="BEFORE_INIT_CAN" />

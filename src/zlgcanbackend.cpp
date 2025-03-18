@@ -8,116 +8,85 @@
 
 QT_BEGIN_NAMESPACE
 
-// Q_DECLARE_LOGGING_CATEGORY(QT_CANBUS_PLUGINS_ZLGCAN)
-
-// #ifndef LINK_LIBPCANBASIC
-// Q_GLOBAL_STATIC(QLibrary, zlgLibrary)
-// #endif
-
-// bool ZLGCanBackend::canCreate(QString* errorReason)
-// {
-// #ifdef LINK_LIBPCANBASIC
-//     return true;
-// #else
-//     static bool symbolsResolved = resolvePeakCanSymbols(pcanLibrary());
-//     if(Q_UNLIKELY(!symbolsResolved))
-//     {
-//         qCCritical(QT_CANBUS_PLUGINS_ZLGCAN, "Cannot load library: %ls", qUtf16Printable(pcanLibrary()->errorString()));
-//         *errorReason = pcanLibrary()->errorString();
-//         return false;
-//     }
-//     return true;
-// #endif
-// }
-
-QList<QCanBusDeviceInfo> ZLGCanBackend::interfaces()
+ZlgCanBackend::ZlgCanBackend(const QString& interfaceName, QObject* parent): QCanBusDevice(parent), d_ptr(new ZlgCanBackendPrivate(this))
 {
-    QList<QCanBusDeviceInfo> devices;
+    Q_D(ZlgCanBackend);
 
-    QFile file(":devices.xml");
-    if(file.open(QFile::ReadOnly))
-    {
-        QXmlStreamReader xml(&file);
-        while(xml.readNextStartElement())
-        {
-            if(Q_UNLIKELY("Devices" != xml.name().toString()))
-            {
-                break;
-            }
-            while(xml.readNextStartElement())
-            {
-                if("Device" == xml.name().toString() && xml.attributes().hasAttribute("type"))
-                {
-                    auto type = xml.attributes().value("type").toString();
-                    auto fd = ("TRUE" == xml.attributes().value("fd").toString().toUpper());
-                    auto channels = xml.attributes().value("channels").toInt();
-                    channels = channels ? channels : 1;
-                    Q_UNUSED(channels);
-#if(QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
-                    devices.append(QCanBusDevice::createDeviceInfo("zlgcan", type, false, fd));
-#else
-                    devices.append(std::move(QCanBusDevice::createDeviceInfo(type, false, fd)));
-#endif
-                }
-                xml.skipCurrentElement();
-            }
-        }
-    }
-
-    return devices;
-}
-
-ZLGCanBackend::ZLGCanBackend(const QString& interfaceName, QObject* parent): QCanBusDevice(parent), d_ptr(new ZLGCanBackendPrivate(this))
-{
-    Q_D(ZLGCanBackend);
-
-    // this->moveToThread(&d->m_workerThread);
-
-    connect(&d->m_readTimer, &QTimer::timeout, this, [=]() {
+    connect(&d->_read_timer, &QTimer::timeout, this, [=]() {
         d->startRead();
     });
-    connect(&d->m_writeTimer, &QTimer::timeout, this, [=]() {
+
+    connect(&d->_write_timer, &QTimer::timeout, this, [=]() {
         d->startWrite();
     });
+
     d->setInterfaceName(interfaceName);
 
 #if(QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
-    std::function<void()> f = std::bind(&ZLGCanBackend::resetController, this);
+    std::function<void()> f = std::bind(&ZlgCanBackend::resetController, this);
     setResetControllerFunction(f);
-    // std::function<CanBusStatus()> g = std::bind(&ZLGCanBackend::busStatus, this);
-    // setCanBusStatusGetter(g);
+
+    std::function<CanBusStatus()> g = std::bind(&ZlgCanBackend::busStatus, this);
+    setCanBusStatusGetter(g);
 #endif
 
 }
 
-ZLGCanBackend::~ZLGCanBackend()
+ZlgCanBackend::~ZlgCanBackend()
 {
-    ZLGCanBackend::close();
-    delete d_ptr;
+    Q_D(ZlgCanBackend);
+
+    ZlgCanBackend::close();
+
+    delete d;
 }
 
-QString ZLGCanBackend::interpretErrorFrame(const QCanBusFrame& frame)
+bool ZlgCanBackend::open()
 {
-    Q_D(ZLGCanBackend);
-    Q_UNUSED(d);
-    Q_UNUSED(frame);
+    Q_D(ZlgCanBackend);
 
-    return QString();
+    if(d->open())
+    {
+        setState(QCanBusDevice::ConnectedState);
+        return true;
+    }
+    return false;
 }
 
-void ZLGCanBackend::setConfigurationParameter(KEY_TYPE key, const QVariant& value)
+void ZlgCanBackend::close()
 {
-    Q_D(ZLGCanBackend);
+    Q_D(ZlgCanBackend);
+
+    d->close();
+
+    setState(QCanBusDevice::UnconnectedState);
+}
+
+#if(QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
+void ZlgCanBackend::setConfigurationParameter(int key, const QVariant& value)
+{
+    Q_D(ZlgCanBackend);
 
     if(d->setConfigurationParameter(key, value))
     {
         QCanBusDevice::setConfigurationParameter(key, value);
     }
 }
-
-bool ZLGCanBackend::writeFrame(const QCanBusFrame& frame)
+#else
+void ZlgCanBackend::setConfigurationParameter(ConfigurationKey key, const QVariant& value)
 {
-    Q_D(ZLGCanBackend);
+    Q_D(ZlgCanBackend);
+
+    if(d->setConfigurationParameter(key, value))
+    {
+        QCanBusDevice::setConfigurationParameter(key, value);
+    }
+}
+#endif
+
+bool ZlgCanBackend::writeFrame(const QCanBusFrame& frame)
+{
+    Q_D(ZlgCanBackend);
 
     if(Q_UNLIKELY(QCanBusDevice::ConnectedState != state()))
     {
@@ -144,54 +113,78 @@ bool ZLGCanBackend::writeFrame(const QCanBusFrame& frame)
 
     enqueueOutgoingFrame(frame);
 
-    if(Q_LIKELY(!d->m_writeTimer.isActive()))
+    if(!d->_write_timer.isActive())
     {
-        d->m_writeTimer.start();
+        d->_write_timer.start();
     }
 
     return true;
 }
 
-void ZLGCanBackend::close()
+QString ZlgCanBackend::interpretErrorFrame(const QCanBusFrame& frame)
 {
-    Q_D(ZLGCanBackend);
+    Q_D(ZlgCanBackend);
+    Q_UNUSED(d);
+    Q_UNUSED(frame);
 
-    d->close();
-    // d->m_workerThread.quit();
-    // d->m_workerThread.wait();
-
-    setState(QCanBusDevice::UnconnectedState);
+    return QString();
 }
 
-bool ZLGCanBackend::open()
+QList<QCanBusDeviceInfo> ZlgCanBackend::interfaces()
 {
-    Q_D(ZLGCanBackend);
+    static QList<QCanBusDeviceInfo> devices_info{};
 
-    // d->m_workerThread.start();
-
-    if(Q_UNLIKELY(!d->open()))
+    if(devices_info.empty())
     {
-        ZLGCanBackend::close();
-        return false;
+        QFile file(":devices.xml");
+        if(file.open(QFile::ReadOnly))
+        {
+            QXmlStreamReader devices_xml_reader(&file);
+            while(devices_xml_reader.readNextStartElement())
+            {
+                if(Q_UNLIKELY("Devices" != devices_xml_reader.name().toString()))
+                {
+                    break;
+                }
+                while(devices_xml_reader.readNextStartElement())
+                {
+                    if("Device" == devices_xml_reader.name().toString() && devices_xml_reader.attributes().hasAttribute("name"))
+                    {
+                        auto name = devices_xml_reader.attributes().value("name").toString();
+                        auto fd = ("TRUE" == devices_xml_reader.attributes().value("fd").toString().toUpper());
+
+#if(QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
+                        devices_info.append(QCanBusDevice::createDeviceInfo("zlgcan", name, false, fd));
+#else
+                        devices_info.append(std::move(QCanBusDevice::createDeviceInfo(name, false, fd)));
+#endif
+                    }
+                    devices_xml_reader.skipCurrentElement();
+                }
+            }
+        }
     }
 
-    setState(QCanBusDevice::ConnectedState);
-    return true;
+    return devices_info;
 }
 
-void ZLGCanBackend::resetController()
+void ZlgCanBackend::resetController()
 {
-    Q_D(ZLGCanBackend);
+    Q_D(ZlgCanBackend);
 
     d->resetController();
 }
 
-// QCanBusDevice::CanBusStatus ZLGCanBackend::busStatus() const
-// {
-//     Q_D(ZLGCanBackend);
-//     Q_UNUSED(d);
+bool ZlgCanBackend::hasBusStatus() const
+{
+    return true;
+}
 
-//     return QCanBusDevice::CanBusStatus::Good;
-// }
+QCanBusDevice::CanBusStatus ZlgCanBackend::busStatus()
+{
+    Q_D(ZlgCanBackend);
+
+    return d->busStatus();
+}
 
 QT_END_NAMESPACE

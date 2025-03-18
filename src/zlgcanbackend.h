@@ -9,43 +9,52 @@
 
 QT_BEGIN_NAMESPACE
 
-class ZLGCanBackendPrivate;
+class ZlgCanBackendPrivate;
 
-class ZLGCanBackend: public QCanBusDevice
+class ZlgCanBackend: public QCanBusDevice
 {
     Q_OBJECT
-
-    Q_DECLARE_PRIVATE(ZLGCanBackend)
-
-    Q_DISABLE_COPY(ZLGCanBackend)
+    Q_DECLARE_PRIVATE(ZlgCanBackend)
+    Q_DISABLE_COPY(ZlgCanBackend)
 
 public:
-    explicit ZLGCanBackend(const QString& interfaceName, QObject* parent = nullptr);
-    ~ZLGCanBackend();
+    explicit ZlgCanBackend(const QString& interfaceName, QObject* parent = nullptr);
+    ~ZlgCanBackend();
 
-    // static bool canCreate(QString* errorReason);
+    virtual bool open() override;
+    virtual void close() override;
+
+#if(QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
+    virtual void setConfigurationParameter(int key, const QVariant& value) override;
+
+    virtual bool writeFrame(const QCanBusFrame& newData) override;
+
+    virtual QString interpretErrorFrame(const QCanBusFrame& errorFrame) override;
+
+    static bool canCreate(QString* errorReason);
     static QList<QCanBusDeviceInfo> interfaces();
 
-    virtual QString interpretErrorFrame(const QCanBusFrame& frame) override;
-
-#if(QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
-#define KEY_TYPE QCanBusDevice::ConfigurationKey
-    virtual void resetController() override;
-#else
-#define KEY_TYPE int
+private:
     void resetController();
+    bool hasBusStatus() const;
+    CanBusStatus busStatus();
+#else
+    virtual void setConfigurationParameter(ConfigurationKey key, const QVariant& value) override;
+
+    virtual bool writeFrame(const QCanBusFrame& newData) override;
+
+    virtual QString interpretErrorFrame(const QCanBusFrame& errorFrame) override;
+
+    static QList<QCanBusDeviceInfo> interfaces();
+
+    virtual void resetController() override;
+    virtual bool hasBusStatus() const override;
+    virtual CanBusStatus busStatus() override;
+    // virtual QCanBusDeviceInfo deviceInfo() const override;
 #endif
 
-    virtual void setConfigurationParameter(KEY_TYPE key, const QVariant& value) override;
-    virtual bool writeFrame(const QCanBusFrame& frame) override;
-    // virtual CanBusStatus busStatus() override;
-
-protected:
-    virtual void close() override;
-    virtual bool open() override;
-
 private:
-    ZLGCanBackendPrivate* const d_ptr{nullptr};
+    ZlgCanBackendPrivate* const d_ptr{nullptr};
 };
 
 QT_END_NAMESPACE

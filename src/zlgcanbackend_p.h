@@ -14,84 +14,49 @@
 
 QT_BEGIN_NAMESPACE
 
-class ZLGCanWriteNotifier;
-
-class ZLGCanBackendPrivate
+class ZlgCanBackendPrivate
 {
-    Q_DECLARE_PUBLIC(ZLGCanBackend)
+    Q_DECLARE_PUBLIC(ZlgCanBackend)
 
-    Q_DISABLE_COPY(ZLGCanBackendPrivate)
-
-    enum class ConfigureMethod
-    {
-        ZCAN_INITCAN,
-        ZCAN_SETVALUE,
-        IPROPERTY_SETVALUE,
-    };
-    enum class ConfigureSequence
-    {
-        BEFORE_INIT_CAN,
-        BEFORE_START_CAN,
-        AFTER_START_CAN,
-    };
-
-    struct ConfigurationItem
-    {
-        QCanBusDevice::ConfigurationKey key{QCanBusDevice::UserKey};
-        bool configurable{false};
-        ConfigureMethod method{ConfigureMethod::ZCAN_SETVALUE};
-        ConfigureSequence sequence{ConfigureSequence::BEFORE_INIT_CAN};
-        QVariant value{};
-    };
-
-    struct Device
-    {
-        QString type{};
-        unsigned int id{0};
-        bool fd{false};
-        unsigned int channels{0};
-        QHash<QCanBusDevice::ConfigurationKey, ConfigurationItem> configurations{};
-        QSet<unsigned int> bitrate{};
-        QSet<unsigned int> data_field_bitrate{};
-    };
+    Q_DISABLE_COPY(ZlgCanBackendPrivate)
 
 public:
-    explicit ZLGCanBackendPrivate(ZLGCanBackend* q);
-    ~ZLGCanBackendPrivate();
+    explicit ZlgCanBackendPrivate(ZlgCanBackend* q);
+    ~ZlgCanBackendPrivate();
 
 public:
-    void setInterfaceName(const QString& interfaceName);
-    bool setConfigurationParameter(int key, const QVariant& value);
-
     bool open();
     void close();
+
+    void setInterfaceName(const QString& interfaceName);
+    bool setConfigurationParameter(int key, const QVariant& value);
 
     void startWrite();
     void startRead();
 
     void resetController();
 
-private:
-    bool setConfigurations(ConfigureSequence sequence);
-    QString systemErrorString(int* error_code = nullptr);
+    QCanBusDevice::CanBusStatus busStatus();
 
 private:
-    ZLGCanBackend* const q_ptr;
-    static QMultiMap<unsigned long long, ZLGCanBackendPrivate*> d_ptrs;
-    static QMutex d_ptrs_mutex;
+    bool setConfigurations(int order);
+    const QString& systemErrorString(int* errorCode = nullptr);
 
-    Device m_device;
-    unsigned int m_index{0};
-    unsigned int m_channel{0};
-    bool m_fd{false};
+private:
+    ZlgCanBackend* const q_ptr;
 
-    DEVICE_HANDLE m_deviceHandle{INVALID_DEVICE_HANDLE};
-    CHANNEL_HANDLE m_channelHandle{INVALID_CHANNEL_HANDLE};
-    // QThread m_workerThread;
-    QMutex m_channelMutex;
+    unsigned int _device_type{};
+    unsigned int _device_index{};
+    unsigned int _channel_index{};
+    DEVICE_HANDLE _device_handle{INVALID_DEVICE_HANDLE};
+    CHANNEL_HANDLE _channel_handle{INVALID_CHANNEL_HANDLE};
 
-    QTimer m_readTimer;
-    QTimer m_writeTimer;
+    bool _fd_enabled{false};
+    QHash<QCanBusDevice::ConfigurationKey, QVariant> _configurations{};
+
+    QTimer _read_timer{};
+    QTimer _write_timer{};
+    QMutex _mutex{};
 };
 
 QT_END_NAMESPACE

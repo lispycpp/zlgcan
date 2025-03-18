@@ -10,30 +10,15 @@ QList<QCanBusDeviceInfo> ZLGCanBusPlugin::availableDevices(QString* errorMessage
 {
     Q_UNUSED(errorMessage)
 
-    // if(Q_UNLIKELY(!ZLGCanBackend::canCreate(errorMessage)))
-    // {
-    //     return QList<QCanBusDeviceInfo>();
-    // }
-
-    return ZLGCanBackend::interfaces();
+    return ZlgCanBackend::interfaces();
 }
 
 QCanBusDevice* ZLGCanBusPlugin::createDevice(const QString& interfaceName, QString* errorMessage) const
 {
     Q_UNUSED(errorMessage)
 
-    // QString errorReason;
-    // if(!ZLGCanBackend::canCreate(&errorReason))
-    // {
-    //     qCWarning(QT_CANBUS_PLUGINS_ZLGCAN, "%ls", qUtf16Printable(errorReason));
-    //     if(errorMessage)
-    //     {
-    //         *errorMessage = errorReason;
-    //     }
-    //     return nullptr;
-    // }
-
-    return new ZLGCanBackend(interfaceName);
+    auto device = new ZlgCanBackend(interfaceName);
+    return device;
 }
 
 QT_END_NAMESPACE
