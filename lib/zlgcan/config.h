@@ -12,125 +12,124 @@ typedef struct _Options Options;
 typedef struct _ConfigNode ConfigNode;
 
 /**
- *  \struct Options
- * èŠ‚ç‚¹mataçš„å¯é€‰é¡¹ã€‚
- */
+*  \struct Options
+* ½ÚµãmataµÄ¿ÉÑ¡Ïî¡£
+*/
 struct _Options
 {
-	/*! å¯é€‰é¡¹çš„æ•°æ®ç±»å‹*/
-	const char * type;
+    /*! ¿ÉÑ¡ÏîµÄÊı¾İÀàĞÍ*/
+    const char * type;
 
-	/*! å¯é€‰é¡¹çš„å€¼*/
-	const char * value;
+    /*! ¿ÉÑ¡ÏîµÄÖµ*/
+    const char * value;
 
-	/*! å¯é€‰é¡¹çš„æè¿°ä¿¡æ¯*/
-	const char * desc;
+    /*! ¿ÉÑ¡ÏîµÄÃèÊöĞÅÏ¢*/
+    const char * desc;
 };
 
 /**
- *  \struct Meta
- * èŠ‚ç‚¹mataä¿¡æ¯ã€‚
- */
+*  \struct Meta
+* ½ÚµãmataĞÅÏ¢¡£
+*/
 struct _Meta
 {
-	/*! é…ç½®é¡¹çš„æ•°æ®ç±»å‹ */
-	const char * type;
+    /*! ÅäÖÃÏîµÄÊı¾İÀàĞÍ */
+    const char * type;
 
-	/*! é…ç½®é¡¹çš„è¯´æ˜æ€§ä¿¡æ¯ */
-	const char * desc;
+    /*! ÅäÖÃÏîµÄËµÃ÷ĞÔĞÅÏ¢ */
+    const char * desc;
 
-	/*! é…ç½®é¡¹æ˜¯å¦æ˜¯åªè¯»çš„ï¼Œç¼ºçœä¸ºå¯è¯»å†™ */
-	int read_only;
+    /*! ÅäÖÃÏîÊÇ·ñÊÇÖ»¶ÁµÄ£¬È±Ê¡Îª¿É¶ÁĞ´ */
+    int read_only;
 
-	/*! é…ç½®é¡¹è¾“å…¥æ ¼å¼çš„æç¤º */
-	const char * format;
+    /*! ÅäÖÃÏîÊäÈë¸ñÊ½µÄÌáÊ¾ */
+    const char * format;
 
-	/*! å¯¹äºæ•°å€¼ç±»å‹çš„é…ç½®é¡¹æ¥è¯´æ˜¯æœ€å°å€¼ï¼Œå¯¹å­—ç¬¦ä¸²çš„é…ç½®é¡¹æ¥è¯´æ˜¯æœ€å°é•¿åº¦ï¼ˆå­—èŠ‚æ•°ï¼‰ã€‚ */
-	double min_value;
+    /*! ¶ÔÓÚÊıÖµÀàĞÍµÄÅäÖÃÏîÀ´ËµÊÇ×îĞ¡Öµ£¬¶Ô×Ö·û´®µÄÅäÖÃÏîÀ´ËµÊÇ×îĞ¡³¤¶È£¨×Ö½ÚÊı£©¡£ */
+    double min_value;
 
-	/*! å¯¹äºæ•°å€¼ç±»å‹çš„é…ç½®é¡¹æ¥è¯´æ˜¯æœ€å¤§å€¼ï¼Œå¯¹å­—ç¬¦ä¸²çš„é…ç½®é¡¹æ¥è¯´æ˜¯æœ€å¤§é•¿åº¦ï¼ˆå­—èŠ‚æ•°ï¼‰ã€‚ */
-	double max_value;
+    /*! ¶ÔÓÚÊıÖµÀàĞÍµÄÅäÖÃÏîÀ´ËµÊÇ×î´óÖµ£¬¶Ô×Ö·û´®µÄÅäÖÃÏîÀ´ËµÊÇ×î´ó³¤¶È£¨×Ö½ÚÊı£©¡£ */
+    double max_value;
 
-	/*! é…ç½®é¡¹çš„å•ä½ */
-	const char * unit;
+    /*! ÅäÖÃÏîµÄµ¥Î» */
+    const char * unit;
 
-	/*! é€šè¿‡æ—‹é’®/æ»šè½®ç­‰æ–¹å¼ä¿®æ”¹é…ç½®é¡¹æ—¶çš„å¢é‡ */
-	double delta;
+    /*! Í¨¹ıĞıÅ¥/¹öÂÖµÈ·½Ê½ĞŞ¸ÄÅäÖÃÏîÊ±µÄÔöÁ¿ */
+    double delta;
 
-    /*! é…ç½®é¡¹æ˜¯å¦å¯è§, trueå¯è§ï¼Œfalseä¸å¯è§ï¼Œä¹Ÿå¯ä»¥ç»‘å®šè¡¨è¾¾å¼ï¼ˆè¡¨è¾¾å¼ä½¿ç”¨å‚è€ƒdemo3ï¼‰ï¼Œç¼ºçœå¯è§ */
+    /*! ÅäÖÃÏîÊÇ·ñ¿É¼û, true¿É¼û£¬false²»¿É¼û£¬Ò²¿ÉÒÔ°ó¶¨±í´ïÊ½£¨±í´ïÊ½Ê¹ÓÃ²Î¿¼demo3£©£¬È±Ê¡¿É¼û */
     const char* visible;
-    
-    /*! è¯¥é…ç½®é¡¹æ˜¯å¦ä½¿èƒ½, trueä½¿èƒ½ï¼Œfalseä¸ä½¿èƒ½ï¼Œä¹Ÿå¯ä»¥ç»‘å®šè¡¨è¾¾å¼ï¼ˆè¡¨è¾¾å¼ä½¿ç”¨å‚è€ƒdemo3ï¼‰ã€‚ç¼ºçœä½¿èƒ½ */
+
+    /*! ¸ÃÅäÖÃÏîÊÇ·ñÊ¹ÄÜ, trueÊ¹ÄÜ£¬false²»Ê¹ÄÜ£¬Ò²¿ÉÒÔ°ó¶¨±í´ïÊ½£¨±í´ïÊ½Ê¹ÓÃ²Î¿¼demo3£©¡£È±Ê¡Ê¹ÄÜ */
     const char* enable;
 
-	/*! é…ç½®é¡¹çš„å¯é€‰å€¼ï¼Œä»…ä½†ã€typeã€ä¸ºé—´æ¥ç±»å‹æ—¶æœ‰æ•ˆ */
-	int editable;
+    /*! ÅäÖÃÏîµÄ¿ÉÑ¡Öµ£¬½öµ«¡ºtype¡»Îª¼ä½ÓÀàĞÍÊ±ÓĞĞ§ */
+    int editable;
 
-	/*! é…ç½®é¡¹çš„å¯é€‰å€¼ï¼Œä»…ä½†ã€typeã€ä¸ºé—´æ¥ç±»å‹æ—¶æœ‰æ•ˆï¼Œä»¥NULLç»“æŸ */
-	Options** options;
+    /*! ÅäÖÃÏîµÄ¿ÉÑ¡Öµ£¬½öµ«¡ºtype¡»Îª¼ä½ÓÀàĞÍÊ±ÓĞĞ§£¬ÒÔNULL½áÊø */
+    Options** options;
 };
 
 /**
- *  \struct Pair
- *  å±æ€§çš„KeyValueå¯¹ã€‚
- */
+*  \struct Pair
+*  ÊôĞÔµÄKeyValue¶Ô¡£
+*/
 struct _Pair
 {
-	const char * key;
-	const char * value;
+    const char * key;
+    const char * value;
 };
 
 /**
- *  \struct ConfigNode 
- *  ConfigNode
- */
+*  \struct ConfigNode 
+*  ConfigNode
+*/
 struct _ConfigNode
 {
-	/*! èŠ‚ç‚¹çš„åå­— */
-	const char * name;
-	/*! èŠ‚ç‚¹çš„å€¼ åŒæ ·å¯ä»¥ç»‘å®šè¡¨è¾¾å¼*/
-	const char * value;
-    /*! èŠ‚ç‚¹å€¼çš„è¡¨è¾¾å¼ï¼Œå½“æœ‰è¯¥è¡¨è¾¾å¼æ—¶ï¼Œvalueç”±æ­¤è¡¨è¾¾å¼è®¡ç®—è€Œæ¥*/
+    /*! ½ÚµãµÄÃû×Ö */
+    const char * name;
+    /*! ½ÚµãµÄÖµ Í¬Ñù¿ÉÒÔ°ó¶¨±í´ïÊ½*/
+    const char * value;
+    /*! ½ÚµãÖµµÄ±í´ïÊ½£¬µ±ÓĞ¸Ã±í´ïÊ½Ê±£¬valueÓÉ´Ë±í´ïÊ½¼ÆËã¶øÀ´*/
     const char* binding_value;
-	/*! è¯¥èŠ‚ç‚¹çš„è·¯å¾„ */
-	const char * path;
-	/*! é…ç½®é¡¹ä¿¡æ¯ */
-	Meta* meta_info;
-	/*! è¯¥èŠ‚ç‚¹çš„å­èŠ‚ç‚¹, ä»¥NULLç»“æŸ*/
-	ConfigNode** children;
-	/*! è¯¥èŠ‚ç‚¹çš„å±æ€§, ä»¥NULLç»“æŸ*/
-	Pair** attributes;
+    /*! ¸Ã½ÚµãµÄÂ·¾¶ */
+    const char * path;
+    /*! ÅäÖÃÏîĞÅÏ¢ */
+    Meta* meta_info;
+    /*! ¸Ã½ÚµãµÄ×Ó½Úµã, ÒÔNULL½áÊø*/
+    ConfigNode** children;
+    /*! ¸Ã½ÚµãµÄÊôĞÔ, ÒÔNULL½áÊø*/
+    Pair** attributes;
 };
 
 /**
- * \brief è·å–å±æ€§çš„æè¿°ä¿¡æ¯ã€‚
- *
- * \retval ConfigNode
- */
+* \brief »ñÈ¡ÊôĞÔµÄÃèÊöĞÅÏ¢¡£
+*
+* \retval ConfigNode
+*/
 typedef const ConfigNode* (*GetPropertysFunc)();
 
 /**
- * \brief è®¾ç½®æŒ‡å®šè·¯å¾„çš„å±æ€§çš„å€¼ã€‚
- * \param[in] path  : å±æ€§çš„è·¯å¾„ã€‚
- * \param[in] value : å±æ€§çš„å€¼ã€‚
- *
- * \retval æˆåŠŸè¿”å›1ï¼Œå¤±è´¥è¿”å›0ã€‚
- */
+* \brief ÉèÖÃÖ¸¶¨Â·¾¶µÄÊôĞÔµÄÖµ¡£
+* \param[in] path  : ÊôĞÔµÄÂ·¾¶¡£
+* \param[in] value : ÊôĞÔµÄÖµ¡£
+*
+* \retval ³É¹¦·µ»Ø1£¬Ê§°Ü·µ»Ø0¡£
+*/
 typedef int (*SetValueFunc)(const char* path, const char* value);
 
 /**
- * \brief è·å–æŒ‡å®šè·¯å¾„çš„å±æ€§çš„å€¼ã€‚
- * \param[in] path  : å±æ€§çš„è·¯å¾„ã€‚
- * \retval æˆåŠŸè¿”å›å±æ€§çš„å€¼ï¼Œå¤±è´¥è¿”å›NULLã€‚
- */
+* \brief »ñÈ¡Ö¸¶¨Â·¾¶µÄÊôĞÔµÄÖµ¡£
+* \param[in] path  : ÊôĞÔµÄÂ·¾¶¡£
+* \retval ³É¹¦·µ»ØÊôĞÔµÄÖµ£¬Ê§°Ü·µ»ØNULL¡£
+*/
 typedef const char* (*GetValueFunc)(const char* path);
 
 typedef struct  tagIProperty
 {
-	SetValueFunc     SetValue;
-	GetValueFunc     GetValue;
-	GetPropertysFunc GetPropertys;
+    SetValueFunc     SetValue;
+    GetValueFunc     GetValue;
+    GetPropertysFunc GetPropertys;
 }IProperty;
 
-#endif/*ZLG_CONFIG_INTF_H*/
-
+#endif /*ZLG_CONFIG_INTF_H*/

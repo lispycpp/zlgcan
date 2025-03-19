@@ -2,14 +2,9 @@
 
 #include "zlgcanbackend.h"
 
-#include <windows.h>
-#undef SendMessage
-#undef ERROR
 #include <QFile>
 #include <QLoggingCategory>
 #include <QXmlStreamReader>
-// #include <stdexcept>
-#include <zlgcan/zlgcan.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -17,38 +12,6 @@ Q_DECLARE_LOGGING_CATEGORY(QT_CANBUS_PLUGINS_ZLGCAN)
 
 namespace zlg
 {
-    enum class ConfigureFunction
-    {
-        ZCAN_INITCAN,
-        ZCAN_SETVALUE,
-        IPROPERTY_SETVALUE,
-    };
-    enum class ConfigureOrder
-    {
-        BEFORE_INIT_CAN,
-        BEFORE_START_CAN,
-        AFTER_START_CAN,
-    };
-
-    struct Configuration
-    {
-        QCanBusDevice::ConfigurationKey key{QCanBusDevice::UserKey};
-        bool configurable{false};
-        ConfigureFunction function{ConfigureFunction::ZCAN_SETVALUE};
-        ConfigureOrder order{ConfigureOrder::BEFORE_INIT_CAN};
-    };
-
-    struct Device
-    {
-        QString name{};
-        unsigned int type{0};
-        bool fd{false};
-        unsigned int channels{0};
-        QHash<QCanBusDevice::ConfigurationKey, Configuration> configurations{};
-        QSet<unsigned int> bitrate{};
-        QSet<unsigned int> data_field_bitrate{};
-    };
-
     const QHash<unsigned int, Device>& get_devices()
     {
         static QHash<unsigned int, Device> devices{};
@@ -242,186 +205,71 @@ namespace zlg
         return 0;
     }
 
-    class Loader
+    Loader::Loader()
     {
-        Loader(const Loader&) = delete;
-        Loader& operator=(const Loader&) = delete;
-        Loader(Loader&&) = delete;
-        Loader& operator=(Loader&&) = delete;
-
-    public:
-        static Loader& instance()
+        if(!(_handle = LoadLibraryA("zlgcan.dll")))
         {
-            static Loader s_instance{};
-            return s_instance;
+            qCCritical(QT_CANBUS_PLUGINS_ZLGCAN, "Cannot load library: %ls", qUtf16Printable("zlgcan.dll"));
+            // throw std::runtime_error("Load library \"zlgcan.dll\" failed.");
         }
 
-    private:
-        explicit Loader()
+        ZCAN_OpenDevice = (pf_ZCAN_OpenDevice)GetProcAddress(_handle, "ZCAN_OpenDevice");
+        ZCAN_CloseDevice = (pf_ZCAN_CloseDevice)GetProcAddress(_handle, "ZCAN_CloseDevice");
+        ZCAN_GetDeviceInf = (pf_ZCAN_GetDeviceInf)GetProcAddress(_handle, "ZCAN_GetDeviceInf");
+        ZCAN_IsDeviceOnLine = (pf_ZCAN_IsDeviceOnLine)GetProcAddress(_handle, "ZCAN_IsDeviceOnLine");
+        ZCAN_InitCAN = (pf_ZCAN_InitCAN)GetProcAddress(_handle, "ZCAN_InitCAN");
+        ZCAN_StartCAN = (pf_ZCAN_StartCAN)GetProcAddress(_handle, "ZCAN_StartCAN");
+        ZCAN_ResetCAN = (pf_ZCAN_ResetCAN)GetProcAddress(_handle, "ZCAN_ResetCAN");
+        ZCAN_ClearBuffer = (pf_ZCAN_ClearBuffer)GetProcAddress(_handle, "ZCAN_ClearBuffer");
+        ZCAN_ReadChannelErrInfo = (pf_ZCAN_ReadChannelErrInfo)GetProcAddress(_handle, "ZCAN_ReadChannelErrInfo");
+        ZCAN_ReadChannelStatus = (pf_ZCAN_ReadChannelStatus)GetProcAddress(_handle, "ZCAN_ReadChannelStatus");
+        ZCAN_GetReceiveNum = (pf_ZCAN_GetReceiveNum)GetProcAddress(_handle, "ZCAN_GetReceiveNum");
+        ZCAN_Transmit = (pf_ZCAN_Transmit)GetProcAddress(_handle, "ZCAN_Transmit");
+        ZCAN_Receive = (pf_ZCAN_Receive)GetProcAddress(_handle, "ZCAN_Receive");
+        ZCAN_TransmitFD = (pf_ZCAN_TransmitFD)GetProcAddress(_handle, "ZCAN_TransmitFD");
+        ZCAN_ReceiveFD = (pf_ZCAN_ReceiveFD)GetProcAddress(_handle, "ZCAN_ReceiveFD");
+        ZCAN_TransmitData = (pf_ZCAN_TransmitData)GetProcAddress(_handle, "ZCAN_TransmitData");
+        ZCAN_ReceiveData = (pf_ZCAN_ReceiveData)GetProcAddress(_handle, "ZCAN_ReceiveData");
+        ZCAN_SetValue = (pf_ZCAN_SetValue)GetProcAddress(_handle, "ZCAN_SetValue");
+        ZCAN_GetValue = (pf_ZCAN_GetValue)GetProcAddress(_handle, "ZCAN_GetValue");
+        GetIProperty = (pf_GetIProperty)GetProcAddress(_handle, "GetIProperty");
+        ReleaseIProperty = (pf_ReleaseIProperty)GetProcAddress(_handle, "ReleaseIProperty");
+        ZCLOUD_SetServerInfo = (pf_ZCLOUD_SetServerInfo)GetProcAddress(_handle, "ZCLOUD_SetServerInfo");
+        ZCLOUD_ConnectServer = (pf_ZCLOUD_ConnectServer)GetProcAddress(_handle, "ZCLOUD_ConnectServer");
+        ZCLOUD_IsConnected = (pf_ZCLOUD_IsConnected)GetProcAddress(_handle, "ZCLOUD_IsConnected");
+        ZCLOUD_DisconnectServer = (pf_ZCLOUD_DisconnectServer)GetProcAddress(_handle, "ZCLOUD_DisconnectServer");
+        ZCLOUD_GetUserData = (pf_ZCLOUD_GetUserData)GetProcAddress(_handle, "ZCLOUD_GetUserData");
+        ZCLOUD_ReceiveGPS = (pf_ZCLOUD_ReceiveGPS)GetProcAddress(_handle, "ZCLOUD_ReceiveGPS");
+        ZCAN_InitLIN = (pf_ZCAN_InitLIN)GetProcAddress(_handle, "ZCAN_InitLIN");
+        ZCAN_StartLIN = (pf_ZCAN_StartLIN)GetProcAddress(_handle, "ZCAN_StartLIN");
+        ZCAN_ResetLIN = (pf_ZCAN_ResetLIN)GetProcAddress(_handle, "ZCAN_ResetLIN");
+        ZCAN_TransmitLIN = (pf_ZCAN_TransmitLIN)GetProcAddress(_handle, "ZCAN_TransmitLIN");
+        ZCAN_GetLINReceiveNum = (pf_ZCAN_GetLINReceiveNum)GetProcAddress(_handle, "ZCAN_GetLINReceiveNum");
+        ZCAN_ReceiveLIN = (pf_ZCAN_ReceiveLIN)GetProcAddress(_handle, "ZCAN_ReceiveLIN");
+        ZCAN_SetLINSlaveMsg = (pf_ZCAN_SetLINSlaveMsg)GetProcAddress(_handle, "ZCAN_SetLINSlaveMsg");
+        ZCAN_ClearLINSlaveMsg = (pf_ZCAN_ClearLINSlaveMsg)GetProcAddress(_handle, "ZCAN_ClearLINSlaveMsg");
+    }
+
+    Loader::~Loader()
+    {
+        if(_handle)
         {
-            if(!(_handle = LoadLibraryA("zlgcan.dll")))
-            {
-                qCCritical(QT_CANBUS_PLUGINS_ZLGCAN, "Cannot load library: %ls", qUtf16Printable("zlgcan.dll"));
-                // throw std::runtime_error("Load library \"zlgcan.dll\" failed.");
-            }
-
-            ZCAN_OpenDevice = (pf_ZCAN_OpenDevice)GetProcAddress(_handle, "ZCAN_OpenDevice");
-            ZCAN_CloseDevice = (pf_ZCAN_CloseDevice)GetProcAddress(_handle, "ZCAN_CloseDevice");
-            ZCAN_GetDeviceInf = (pf_ZCAN_GetDeviceInf)GetProcAddress(_handle, "ZCAN_GetDeviceInf");
-            ZCAN_IsDeviceOnLine = (pf_ZCAN_IsDeviceOnLine)GetProcAddress(_handle, "ZCAN_IsDeviceOnLine");
-            ZCAN_InitCAN = (pf_ZCAN_InitCAN)GetProcAddress(_handle, "ZCAN_InitCAN");
-            ZCAN_StartCAN = (pf_ZCAN_StartCAN)GetProcAddress(_handle, "ZCAN_StartCAN");
-            ZCAN_ResetCAN = (pf_ZCAN_ResetCAN)GetProcAddress(_handle, "ZCAN_ResetCAN");
-            ZCAN_ClearBuffer = (pf_ZCAN_ClearBuffer)GetProcAddress(_handle, "ZCAN_ClearBuffer");
-            ZCAN_ReadChannelErrInfo = (pf_ZCAN_ReadChannelErrInfo)GetProcAddress(_handle, "ZCAN_ReadChannelErrInfo");
-            ZCAN_ReadChannelStatus = (pf_ZCAN_ReadChannelStatus)GetProcAddress(_handle, "ZCAN_ReadChannelStatus");
-            ZCAN_GetReceiveNum = (pf_ZCAN_GetReceiveNum)GetProcAddress(_handle, "ZCAN_GetReceiveNum");
-            ZCAN_Transmit = (pf_ZCAN_Transmit)GetProcAddress(_handle, "ZCAN_Transmit");
-            ZCAN_Receive = (pf_ZCAN_Receive)GetProcAddress(_handle, "ZCAN_Receive");
-            ZCAN_TransmitFD = (pf_ZCAN_TransmitFD)GetProcAddress(_handle, "ZCAN_TransmitFD");
-            ZCAN_ReceiveFD = (pf_ZCAN_ReceiveFD)GetProcAddress(_handle, "ZCAN_ReceiveFD");
-            ZCAN_TransmitData = (pf_ZCAN_TransmitData)GetProcAddress(_handle, "ZCAN_TransmitData");
-            ZCAN_ReceiveData = (pf_ZCAN_ReceiveData)GetProcAddress(_handle, "ZCAN_ReceiveData");
-            ZCAN_SetValue = (pf_ZCAN_SetValue)GetProcAddress(_handle, "ZCAN_SetValue");
-            ZCAN_GetValue = (pf_ZCAN_GetValue)GetProcAddress(_handle, "ZCAN_GetValue");
-            GetIProperty = (pf_GetIProperty)GetProcAddress(_handle, "GetIProperty");
-            ReleaseIProperty = (pf_ReleaseIProperty)GetProcAddress(_handle, "ReleaseIProperty");
-            ZCLOUD_SetServerInfo = (pf_ZCLOUD_SetServerInfo)GetProcAddress(_handle, "ZCLOUD_SetServerInfo");
-            ZCLOUD_ConnectServer = (pf_ZCLOUD_ConnectServer)GetProcAddress(_handle, "ZCLOUD_ConnectServer");
-            ZCLOUD_IsConnected = (pf_ZCLOUD_IsConnected)GetProcAddress(_handle, "ZCLOUD_IsConnected");
-            ZCLOUD_DisconnectServer = (pf_ZCLOUD_DisconnectServer)GetProcAddress(_handle, "ZCLOUD_DisconnectServer");
-            ZCLOUD_GetUserData = (pf_ZCLOUD_GetUserData)GetProcAddress(_handle, "ZCLOUD_GetUserData");
-            ZCLOUD_ReceiveGPS = (pf_ZCLOUD_ReceiveGPS)GetProcAddress(_handle, "ZCLOUD_ReceiveGPS");
-            ZCAN_InitLIN = (pf_ZCAN_InitLIN)GetProcAddress(_handle, "ZCAN_InitLIN");
-            ZCAN_StartLIN = (pf_ZCAN_StartLIN)GetProcAddress(_handle, "ZCAN_StartLIN");
-            ZCAN_ResetLIN = (pf_ZCAN_ResetLIN)GetProcAddress(_handle, "ZCAN_ResetLIN");
-            ZCAN_TransmitLIN = (pf_ZCAN_TransmitLIN)GetProcAddress(_handle, "ZCAN_TransmitLIN");
-            ZCAN_GetLINReceiveNum = (pf_ZCAN_GetLINReceiveNum)GetProcAddress(_handle, "ZCAN_GetLINReceiveNum");
-            ZCAN_ReceiveLIN = (pf_ZCAN_ReceiveLIN)GetProcAddress(_handle, "ZCAN_ReceiveLIN");
-            ZCAN_SetLINSlaveMsg = (pf_ZCAN_SetLINSlaveMsg)GetProcAddress(_handle, "ZCAN_SetLINSlaveMsg");
-            ZCAN_ClearLINSlaveMsg = (pf_ZCAN_ClearLINSlaveMsg)GetProcAddress(_handle, "ZCAN_ClearLINSlaveMsg");
+            FreeLibrary(_handle);
         }
+    }
 
-        ~Loader()
-        {
-            if(_handle)
-            {
-                FreeLibrary(_handle);
-            }
-        }
+    const Loader* Loader::instance()
+    {
+        static Loader instance{};
+        return &instance;
+    }
 
-    public:
-        typedef DEVICE_HANDLE (*pf_ZCAN_OpenDevice)(UINT, UINT, UINT);
-        pf_ZCAN_OpenDevice ZCAN_OpenDevice{};
-
-        typedef UINT (*pf_ZCAN_CloseDevice)(DEVICE_HANDLE);
-        pf_ZCAN_CloseDevice ZCAN_CloseDevice{};
-
-        typedef UINT (*pf_ZCAN_GetDeviceInf)(DEVICE_HANDLE, ZCAN_DEVICE_INFO*);
-        pf_ZCAN_GetDeviceInf ZCAN_GetDeviceInf{};
-
-        typedef UINT (*pf_ZCAN_IsDeviceOnLine)(DEVICE_HANDLE);
-        pf_ZCAN_IsDeviceOnLine ZCAN_IsDeviceOnLine{};
-
-        typedef CHANNEL_HANDLE (*pf_ZCAN_InitCAN)(DEVICE_HANDLE, UINT, ZCAN_CHANNEL_INIT_CONFIG*);
-        pf_ZCAN_InitCAN ZCAN_InitCAN{};
-
-        typedef UINT (*pf_ZCAN_StartCAN)(CHANNEL_HANDLE);
-        pf_ZCAN_StartCAN ZCAN_StartCAN{};
-
-        typedef UINT (*pf_ZCAN_ResetCAN)(CHANNEL_HANDLE);
-        pf_ZCAN_ResetCAN ZCAN_ResetCAN{};
-
-        typedef UINT (*pf_ZCAN_ClearBuffer)(CHANNEL_HANDLE);
-        pf_ZCAN_ClearBuffer ZCAN_ClearBuffer{};
-
-        typedef UINT (*pf_ZCAN_ReadChannelErrInfo)(CHANNEL_HANDLE, ZCAN_CHANNEL_ERR_INFO*);
-        pf_ZCAN_ReadChannelErrInfo ZCAN_ReadChannelErrInfo{};
-
-        typedef UINT (*pf_ZCAN_ReadChannelStatus)(CHANNEL_HANDLE, ZCAN_CHANNEL_STATUS*);
-        pf_ZCAN_ReadChannelStatus ZCAN_ReadChannelStatus{};
-
-        typedef UINT (*pf_ZCAN_GetReceiveNum)(CHANNEL_HANDLE, BYTE);
-        pf_ZCAN_GetReceiveNum ZCAN_GetReceiveNum{};
-
-        typedef UINT (*pf_ZCAN_Transmit)(CHANNEL_HANDLE, ZCAN_Transmit_Data*, UINT);
-        pf_ZCAN_Transmit ZCAN_Transmit{};
-
-        typedef UINT (*pf_ZCAN_Receive)(CHANNEL_HANDLE, ZCAN_Receive_Data*, UINT, int);
-        pf_ZCAN_Receive ZCAN_Receive{};
-
-        typedef UINT (*pf_ZCAN_TransmitFD)(CHANNEL_HANDLE, ZCAN_TransmitFD_Data*, UINT);
-        pf_ZCAN_TransmitFD ZCAN_TransmitFD{};
-
-        typedef UINT (*pf_ZCAN_ReceiveFD)(CHANNEL_HANDLE, ZCAN_ReceiveFD_Data*, UINT, int);
-        pf_ZCAN_ReceiveFD ZCAN_ReceiveFD{};
-
-        typedef UINT (*pf_ZCAN_TransmitData)(DEVICE_HANDLE, ZCANDataObj*, UINT);
-        pf_ZCAN_TransmitData ZCAN_TransmitData{};
-
-        typedef UINT (*pf_ZCAN_ReceiveData)(DEVICE_HANDLE, ZCANDataObj*, UINT, int);
-        pf_ZCAN_ReceiveData ZCAN_ReceiveData{};
-
-        typedef UINT (*pf_ZCAN_SetValue)(DEVICE_HANDLE, const char*, const void*);
-        pf_ZCAN_SetValue ZCAN_SetValue{};
-
-        typedef const void* (*pf_ZCAN_GetValue)(DEVICE_HANDLE, const char*);
-        pf_ZCAN_GetValue ZCAN_GetValue{};
-
-        typedef IProperty* (*pf_GetIProperty)(DEVICE_HANDLE);
-        pf_GetIProperty GetIProperty{};
-
-        typedef UINT (*pf_ReleaseIProperty)(IProperty*);
-        pf_ReleaseIProperty ReleaseIProperty{};
-
-        typedef void (*pf_ZCLOUD_SetServerInfo)(const char*, unsigned short, const char*, unsigned short);
-        pf_ZCLOUD_SetServerInfo ZCLOUD_SetServerInfo{};
-
-        typedef UINT (*pf_ZCLOUD_ConnectServer)(const char*, const char*);
-        pf_ZCLOUD_ConnectServer ZCLOUD_ConnectServer{};
-
-        typedef bool (*pf_ZCLOUD_IsConnected)();
-        pf_ZCLOUD_IsConnected ZCLOUD_IsConnected{};
-
-        typedef UINT (*pf_ZCLOUD_DisconnectServer)();
-        pf_ZCLOUD_DisconnectServer ZCLOUD_DisconnectServer{};
-
-        typedef const ZCLOUD_USER_DATA* (*pf_ZCLOUD_GetUserData)(int);
-        pf_ZCLOUD_GetUserData ZCLOUD_GetUserData{};
-
-        typedef UINT (*pf_ZCLOUD_ReceiveGPS)(DEVICE_HANDLE, ZCLOUD_GPS_FRAME*, UINT, int);
-        pf_ZCLOUD_ReceiveGPS ZCLOUD_ReceiveGPS{};
-
-        typedef CHANNEL_HANDLE (*pf_ZCAN_InitLIN)(DEVICE_HANDLE, UINT, PZCAN_LIN_INIT_CONFIG);
-        pf_ZCAN_InitLIN ZCAN_InitLIN{};
-
-        typedef UINT (*pf_ZCAN_StartLIN)(CHANNEL_HANDLE);
-        pf_ZCAN_StartLIN ZCAN_StartLIN{};
-
-        typedef UINT (*pf_ZCAN_ResetLIN)(CHANNEL_HANDLE);
-        pf_ZCAN_ResetLIN ZCAN_ResetLIN{};
-
-        typedef UINT (*pf_ZCAN_TransmitLIN)(CHANNEL_HANDLE, PZCAN_LIN_MSG, UINT);
-        pf_ZCAN_TransmitLIN ZCAN_TransmitLIN{};
-
-        typedef UINT (*pf_ZCAN_GetLINReceiveNum)(CHANNEL_HANDLE);
-        pf_ZCAN_GetLINReceiveNum ZCAN_GetLINReceiveNum{};
-
-        typedef UINT (*pf_ZCAN_ReceiveLIN)(CHANNEL_HANDLE, PZCAN_LIN_MSG, UINT, int);
-        pf_ZCAN_ReceiveLIN ZCAN_ReceiveLIN{};
-
-        typedef UINT (*pf_ZCAN_SetLINSlaveMsg)(CHANNEL_HANDLE, PZCAN_LIN_MSG, UINT);
-        pf_ZCAN_SetLINSlaveMsg ZCAN_SetLINSlaveMsg{};
-
-        typedef UINT (*pf_ZCAN_ClearLINSlaveMsg)(CHANNEL_HANDLE, BYTE*, UINT);
-        pf_ZCAN_ClearLINSlaveMsg ZCAN_ClearLINSlaveMsg{};
-
-    private:
-        HINSTANCE _handle{NULL};
-    };
 } //namespace zlg
 
-ZlgCanBackendPrivate::ZlgCanBackendPrivate(ZlgCanBackend* q): q_ptr(q) {}
+ZlgCanBackendPrivate::ZlgCanBackendPrivate(ZlgCanBackend* q): q_ptr(q)
+{
+    dll = zlg::Loader::instance();
+}
 
 ZlgCanBackendPrivate::~ZlgCanBackendPrivate()
 {
@@ -432,22 +280,18 @@ bool ZlgCanBackendPrivate::open()
 {
     Q_Q(ZlgCanBackend);
 
-    static auto& ZCAN_OpenDevice{zlg::Loader::instance().ZCAN_OpenDevice};
-    static auto& ZCAN_InitCAN{zlg::Loader::instance().ZCAN_InitCAN};
-    static auto& ZCAN_StartCAN{zlg::Loader::instance().ZCAN_StartCAN};
-    static auto& ZCAN_CloseDevice{zlg::Loader::instance().ZCAN_CloseDevice};
-
     if(!_device_handle && !_channel_handle && _device_type)
     {
         const QMutexLocker locker{&_mutex};
 
-        _device_handle = ZCAN_OpenDevice(_device_type, _device_index, 0);
+        const auto& device{zlg::get_devices()[_device_type]};
+        _device_handle = dll->ZCAN_OpenDevice(_device_type, _device_index, 0);
         if(_device_handle)
         {
             setConfigurations(static_cast<int>(zlg::ConfigureOrder::BEFORE_INIT_CAN));
             ZCAN_CHANNEL_INIT_CONFIG config{};
             ::memset(&config, 0, sizeof(config));
-            config.can_type = _fd_enabled ? 1 : 0;
+            config.can_type = device.fd ? 1 : 0;
             if(config.can_type)
             {
                 config.canfd.acc_code = 0;
@@ -462,11 +306,11 @@ bool ZlgCanBackendPrivate::open()
                 // config.can.filter = 1;
                 // config.can.mode = 0;
             }
-            _channel_handle = ZCAN_InitCAN(_device_handle, _channel_index, &config);
+            _channel_handle = dll->ZCAN_InitCAN(_device_handle, _channel_index, &config);
             if(_channel_handle)
             {
                 setConfigurations(static_cast<int>(zlg::ConfigureOrder::BEFORE_START_CAN));
-                if(STATUS_OK == ZCAN_StartCAN(_channel_handle))
+                if(STATUS_OK == dll->ZCAN_StartCAN(_channel_handle))
                 {
                     setConfigurations(static_cast<int>(zlg::ConfigureOrder::AFTER_START_CAN));
                     _read_timer.start();
@@ -477,7 +321,7 @@ bool ZlgCanBackendPrivate::open()
 
         if(_device_handle)
         {
-            ZCAN_CloseDevice(_device_handle);
+            dll->ZCAN_CloseDevice(_device_handle);
             _device_handle = INVALID_DEVICE_HANDLE;
             _channel_handle = INVALID_CHANNEL_HANDLE;
         }
@@ -489,8 +333,6 @@ bool ZlgCanBackendPrivate::open()
 
 void ZlgCanBackendPrivate::close()
 {
-    static auto& ZCAN_CloseDevice{zlg::Loader::instance().ZCAN_CloseDevice};
-
     _read_timer.stop();
     _write_timer.stop();
 
@@ -498,7 +340,7 @@ void ZlgCanBackendPrivate::close()
     {
         const QMutexLocker channel_locker{&_mutex};
 
-        ZCAN_CloseDevice(_device_handle);
+        dll->ZCAN_CloseDevice(_device_handle);
         _device_handle = INVALID_DEVICE_HANDLE;
         _channel_handle = INVALID_CHANNEL_HANDLE;
     }
@@ -527,7 +369,8 @@ void ZlgCanBackendPrivate::setInterfaceName(const QString& interfaceName)
         }
     }
     _device_type = zlg::get_device_type(device_name);
-    _fd_enabled = _device_type ? zlg::get_devices()[_device_type].fd : false;
+    const auto& device{zlg::get_devices()[_device_type]};
+    _fd_enabled = _device_type ? device.fd : false;
 }
 
 bool ZlgCanBackendPrivate::setConfigurationParameter(int key, const QVariant& value)
@@ -547,9 +390,6 @@ bool ZlgCanBackendPrivate::setConfigurationParameter(int key, const QVariant& va
 void ZlgCanBackendPrivate::startWrite()
 {
     Q_Q(ZlgCanBackend);
-
-    static auto& ZCAN_Transmit{zlg::Loader::instance().ZCAN_Transmit};
-    static auto& ZCAN_TransmitFD{zlg::Loader::instance().ZCAN_TransmitFD};
 
     if(_channel_handle && q->hasOutgoingFrames())
     {
@@ -595,7 +435,7 @@ void ZlgCanBackendPrivate::startWrite()
             auto result{0U};
             {
                 const QMutexLocker locker{&_mutex};
-                result = ZCAN_Transmit(_channel_handle, data, len);
+                result = dll->ZCAN_Transmit(_channel_handle, data, len);
             }
             return result;
         }};
@@ -633,7 +473,7 @@ void ZlgCanBackendPrivate::startWrite()
             auto result{0U};
             {
                 const QMutexLocker locker{&_mutex};
-                result = ZCAN_TransmitFD(_channel_handle, fd_data, len);
+                result = dll->ZCAN_TransmitFD(_channel_handle, fd_data, len);
             }
             return result;
         }};
@@ -668,10 +508,6 @@ void ZlgCanBackendPrivate::startRead()
 {
     Q_Q(ZlgCanBackend);
 
-    static auto& ZCAN_GetReceiveNum{zlg::Loader::instance().ZCAN_GetReceiveNum};
-    static auto& ZCAN_Receive{zlg::Loader::instance().ZCAN_Receive};
-    static auto& ZCAN_ReceiveFD{zlg::Loader::instance().ZCAN_ReceiveFD};
-
     if(_channel_handle)
     {
         QCanBusFrame frame{};
@@ -688,7 +524,7 @@ void ZlgCanBackendPrivate::startRead()
             auto result{0U};
             {
                 const QMutexLocker locker{&_mutex};
-                result = ZCAN_Receive(_channel_handle, data, size, 0);
+                result = dll->ZCAN_Receive(_channel_handle, data, size, 0);
             }
             for(unsigned int i = 0; i < result; ++i)
             {
@@ -719,7 +555,7 @@ void ZlgCanBackendPrivate::startRead()
             auto result{0U};
             {
                 const QMutexLocker locker{&_mutex};
-                result = ZCAN_ReceiveFD(_channel_handle, fd_data, size, 0);
+                result = dll->ZCAN_ReceiveFD(_channel_handle, fd_data, size, 0);
             }
             for(auto i{0U}; i < result; ++i)
             {
@@ -742,7 +578,7 @@ void ZlgCanBackendPrivate::startRead()
         }};
 
         auto size{0U};
-        while((size = ZCAN_GetReceiveNum(_channel_handle, 0)))
+        while((size = dll->ZCAN_GetReceiveNum(_channel_handle, 0)))
         {
             receive_frame(size);
             if(frames.size() >= 256)
@@ -751,7 +587,7 @@ void ZlgCanBackendPrivate::startRead()
                 frames.clear();
             }
         }
-        while(_fd_enabled && (size = ZCAN_GetReceiveNum(_channel_handle, 1)))
+        while(_fd_enabled && (size = dll->ZCAN_GetReceiveNum(_channel_handle, 1)))
         {
             receive_frame_fd(size);
             if(frames.size() >= 256)
@@ -776,15 +612,12 @@ void ZlgCanBackendPrivate::resetController()
 {
     Q_Q(ZlgCanBackend);
 
-    static auto& ZCAN_ResetCAN{zlg::Loader::instance().ZCAN_ResetCAN};
-    static auto& ZCAN_StartCAN{zlg::Loader::instance().ZCAN_StartCAN};
-
     if(_channel_handle)
     {
         auto result{false};
         {
             const QMutexLocker locker{&_mutex};
-            result = (STATUS_OK == ZCAN_ResetCAN(_channel_handle)) && (STATUS_OK == ZCAN_StartCAN(_channel_handle));
+            result = (STATUS_OK == dll->ZCAN_ResetCAN(_channel_handle)) && (STATUS_OK == dll->ZCAN_StartCAN(_channel_handle));
         }
 
         if(result)
@@ -803,7 +636,6 @@ void ZlgCanBackendPrivate::resetController()
 
 QCanBusDevice::CanBusStatus ZlgCanBackendPrivate::busStatus()
 {
-    static auto& ZCAN_ReadChannelErrInfo{zlg::Loader::instance().ZCAN_ReadChannelErrInfo};
 
     if(_channel_handle)
     {
@@ -811,7 +643,7 @@ QCanBusDevice::CanBusStatus ZlgCanBackendPrivate::busStatus()
         auto result{false};
         {
             const QMutexLocker locker{&_mutex};
-            result = STATUS_OK == ZCAN_ReadChannelErrInfo(_channel_handle, &error_info);
+            result = STATUS_OK == dll->ZCAN_ReadChannelErrInfo(_channel_handle, &error_info);
         }
         if(result)
         {
@@ -847,8 +679,6 @@ bool ZlgCanBackendPrivate::setConfigurations(int order)
     Q_Q(ZlgCanBackend);
     Q_UNUSED(q)
 
-    static auto& ZCAN_SetValue{zlg::Loader::instance().ZCAN_SetValue};
-
     class IPropertyManager
     {
         Q_DISABLE_COPY(IPropertyManager)
@@ -856,18 +686,15 @@ bool ZlgCanBackendPrivate::setConfigurations(int order)
     public:
         explicit IPropertyManager(void* handle)
         {
-            static auto& GetIProperty{zlg::Loader::instance().GetIProperty};
-
-            _iproperty = GetIProperty(handle);
+            dll = zlg::Loader::instance();
+            _iproperty = dll->GetIProperty(handle);
         }
 
         virtual ~IPropertyManager()
         {
-            static auto& ReleaseIProperty{zlg::Loader::instance().ReleaseIProperty};
-
             if(_iproperty)
             {
-                ReleaseIProperty(_iproperty);
+                dll->ReleaseIProperty(_iproperty);
             }
         }
 
@@ -883,6 +710,7 @@ bool ZlgCanBackendPrivate::setConfigurations(int order)
 
     private:
         IProperty* _iproperty{};
+        const zlg::Loader* dll{};
     };
 
     IPropertyManager iproperty_manager{_device_handle};
@@ -892,7 +720,7 @@ bool ZlgCanBackendPrivate::setConfigurations(int order)
         {
             if(zlg::ConfigureFunction::ZCAN_SETVALUE == method)
             {
-                return STATUS_OK == ZCAN_SetValue(_device_handle, path, value);
+                return STATUS_OK == dll->ZCAN_SetValue(_device_handle, path, value);
             }
 
             else if(zlg::ConfigureFunction::IPROPERTY_SETVALUE == method)
@@ -910,6 +738,12 @@ bool ZlgCanBackendPrivate::setConfigurations(int order)
         QByteArray value{};
         const auto& device{zlg::get_devices()[_device_type]};
         const auto configure_order{static_cast<zlg::ConfigureOrder>(order)};
+
+        if(!_fd_enabled && device.fd && _configurations.contains(QCanBusDevice::BitRateKey))
+        {
+            _configurations[QCanBusDevice::DataBitRateKey] = _configurations[QCanBusDevice::BitRateKey];
+        }
+
         for(auto iter{_configurations.cbegin()}; iter != _configurations.cend(); ++iter)
         {
             if(!iter.value().isValid() || !device.configurations.contains(iter.key()))
@@ -939,7 +773,7 @@ bool ZlgCanBackendPrivate::setConfigurations(int order)
                     {
                         str = QString("%1/baud_rate_custom");
                     }
-                    else if(_fd_enabled)
+                    if(device.fd)
                     {
                         str = QString("%1/canfd_abit_baud_rate");
                     }
@@ -955,7 +789,7 @@ bool ZlgCanBackendPrivate::setConfigurations(int order)
                 case QCanBusDevice::DataBitRateKey:
                 {
                     auto data_bitrate{iter.value().toUInt()};
-                    if(_fd_enabled && device.data_field_bitrate.contains(data_bitrate))
+                    if(device.fd && device.data_field_bitrate.contains(data_bitrate))
                     {
                         path = QString("%1/canfd_dbit_baud_rate").arg(_channel_index).toLatin1();
                         value = QByteArray::number(data_bitrate);
@@ -975,8 +809,6 @@ bool ZlgCanBackendPrivate::setConfigurations(int order)
 
 const QString& ZlgCanBackendPrivate::systemErrorString(int* error_code)
 {
-    static auto& ZCAN_ReadChannelErrInfo{zlg::Loader::instance().ZCAN_ReadChannelErrInfo};
-
     static QHash<unsigned int, QString> dict{
         {                             0,                "Unknown error"},
         {       ZCAN_ERROR_CAN_OVERFLOW, "CAN controller FIFO overflow"},
@@ -998,7 +830,7 @@ const QString& ZlgCanBackendPrivate::systemErrorString(int* error_code)
 
     ZCAN_CHANNEL_ERR_INFO info{};
     ::memset(&info, 0, sizeof(info));
-    if(_channel_handle && STATUS_OK == ZCAN_ReadChannelErrInfo(_channel_handle, &info) && error_code)
+    if(_channel_handle && STATUS_OK == dll->ZCAN_ReadChannelErrInfo(_channel_handle, &info) && error_code)
     {
         *error_code = info.error_code;
     }
