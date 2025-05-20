@@ -399,4 +399,5 @@ FodyWeavers.xsd
 
 # Directory
 .vscode/
-[Bb]uild
+app/
+build/
